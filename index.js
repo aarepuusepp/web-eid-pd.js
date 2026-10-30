@@ -1,5 +1,5 @@
-export const libraryVersion='1.0.0';
-export const ErrorCode=Object.freeze(Object.fromEntries(['EXTENSION_UNAVAILABLE','NATIVE_UNAVAILABLE','VERSION_MISMATCH','USER_CANCELLED','USER_TIMEOUT','CARD_NOT_FOUND','READER_NOT_FOUND','PKCS11_UNAVAILABLE','SITE_DENIED','POLICY_INVALID','CONTEXT_INSECURE','ACTION_PENDING','INVALID_REQUEST','WRONG_KEY','UNKNOWN_ERROR'].map(k=>['ERR_EIDPD_'+k,'ERR_EIDPD_'+k])));
+export const libraryVersion='1.0.1';
+export const ErrorCode=Object.freeze(Object.fromEntries(['EXTENSION_UNAVAILABLE','NATIVE_UNAVAILABLE','VERSION_MISMATCH','USER_CANCELLED','USER_TIMEOUT','PIN_TIMEOUT','CARD_NOT_FOUND','READER_NOT_FOUND','PKCS11_UNAVAILABLE','SITE_DENIED','POLICY_INVALID','CONTEXT_INSECURE','ACTION_PENDING','INVALID_REQUEST','WRONG_KEY','UNKNOWN_ERROR'].map(k=>['ERR_EIDPD_'+k,'ERR_EIDPD_'+k])));
 const failure=(code,message)=>Object.assign(new Error(message),{code});
 let busy=false;
 function request(action,payload={},timeout=120000){
@@ -34,7 +34,11 @@ export const readAllReaders=(options={})=>action('READ_ALL_READERS',{},options);
 export async function getDecryptCertificate(options={}){const r=await action('GET_DECRYPT_CERTIFICATE',{},options);return r.data;}
 export async function unwrapTransportKey(certificate,challenge,options={}){
  if(!certificate||!challenge)throw failure(ErrorCode.ERR_EIDPD_INVALID_REQUEST,'Sertifikaat ja dekrüpteerimispäring on nõutud');
- const r=await action('UNWRAP_TRANSPORT_KEY',{certificate,challenge},options);
+ // Display metadata is separate from the cryptographic challenge fields.
+ // Existing extension bridges forward the challenge unchanged. The native
+ // reader derives identity from the card, never from this metadata.
+ const displayContext={fileName:typeof options.fileName==='string'?options.fileName.slice(0,512):''};
+ const r=await action('UNWRAP_TRANSPORT_KEY',{certificate,challenge:{...challenge,displayContext}},options);
  return {contentEncryptionKey:r.data.contentEncryptionKey||r.data.contentEncryptionKeyBase64};
 }
 export function describeStatus(s,capability='personalData'){

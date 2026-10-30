@@ -1,6 +1,6 @@
 export declare const libraryVersion: string;
 export declare const ErrorCode: Readonly<Record<string,string>>;
-export interface Options { timeout?:number; userInteractionTimeout?:number; lang?:string; mode?:'contact'|'nfc'; can?:string; }
+export interface Options { timeout?:number; userInteractionTimeout?:number; lang?:string; mode?:'contact'|'nfc'; can?:string; fileName?:string; }
 export interface PersonalData { surname:string; givenName:string; personalCode:string; documentNumber?:string; documentNr?:string; birthDate?:string; issueDate?:string; dateOfBirth?:string; placeOfBirth?:string; issuedDate?:string; expiryDate?:string; citizenship?:string; sex?:string; source?:string; }
 export interface CardResult { reader:string; duration:string; ok?:boolean; data?:PersonalData; error?:string; }
 export interface ReadResult {ok:boolean;data?:PersonalData;error?:string;results?:CardResult[];}
