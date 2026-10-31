@@ -38,7 +38,7 @@ certificate validity or PIN. No cardholder information is read by this watcher.
 getDecryptCertificate({mode: 'nfc', can, lang}) reads the public encryption
 recipient certificate without PIN. unwrapTransportKey(certificate, challenge,
 {mode: 'nfc', can, lang, fileName}) invokes the native PIN dialog and key operation.
-Use reader and extension 2.1.5. Both nfcCryptoSupported and nfcCryptoBridge must
+Current tested release uses reader/package 2.1.10 and extension 2.1.6. Both nfcCryptoSupported and nfcCryptoBridge must
 be present; an old component yields ERR_EIDPD_VERSION_MISMATCH.
 
 Keep CAN only for the current operation, clear the field afterwards, and never
