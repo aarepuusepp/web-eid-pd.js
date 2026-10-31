@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {status,readAllReaders,describeStatus,installationHelp,unwrapTransportKey} from '../index.js';
+import {status,readAllReaders,describeStatus,installationHelp,unwrapTransportKey,getDecryptCertificate} from '../index.js';
 function browser(reply){
  const listeners=new Set();const w={isSecureContext:true,location:{protocol:'https:',origin:'https://visitor.test'},addEventListener:(t,f)=>listeners.add(f),removeEventListener:(t,f)=>listeners.delete(f),postMessage(m){queueMicrotask(()=>{const result=reply(m);for(const f of listeners)f({source:w,origin:w.location.origin,data:{target:'EIDPD_CLIENT_RESPONSE',requestId:m.requestId,...result}})});}};w.top=w;globalThis.window=w;return listeners;
 }
@@ -33,4 +33,20 @@ test('native PIN timeout remains distinct and releases operation lock', async()=
  browser(m=>m.action==='STATUS'?{ok:true,result:ready}:{ok:false,errorCode:'ERR_EIDPD_PIN_TIMEOUT',error:'expired'});
  await assert.rejects(unwrapTransportKey('cert',{}),{code:'ERR_EIDPD_PIN_TIMEOUT'});
  await assert.rejects(unwrapTransportKey('cert',{}),{code:'ERR_EIDPD_PIN_TIMEOUT'});
+});
+
+
+test('NFC crypto rejects old bridges and old hosts without issuing a card operation', async()=>{
+ for (const flags of [{},{nfcCryptoSupported:true},{nfcCryptoBridge:true}]) {
+  const calls=[];browser(m=>{calls.push(m.action);return {ok:true,result:{...ready,...flags}}});
+  await assert.rejects(getDecryptCertificate({mode:'nfc',can:'123456'}),{code:'ERR_EIDPD_VERSION_MISMATCH'});
+  assert.deepEqual(calls,['STATUS']);
+ }
+});
+test('NFC certificate and unwrap preserve mode/CAN without a web PIN',async()=>{
+ const calls=[];browser(m=>{calls.push(m);return {ok:true,result:m.action==='STATUS'?{...ready,nfcCryptoBridge:true,nfcCryptoSupported:true}:{data:{certificatePem:'cert',contentEncryptionKey:'key'}}}});
+ await getDecryptCertificate({mode:'nfc',can:'123456'});
+ await unwrapTransportKey('cert',{}, {mode:'nfc',can:'123456'});
+ for (const m of calls.filter(m=>m.action!=='STATUS')) {assert.equal(m.options.mode,'nfc');assert.equal(m.options.can,'123456');assert.equal(m.options.pin,undefined);}
+ await assert.rejects(getDecryptCertificate({mode:'nfc',can:'12345x'}),{code:'ERR_EIDPD_INVALID_REQUEST'});
 });

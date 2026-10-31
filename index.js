@@ -1,4 +1,4 @@
-export const libraryVersion='1.0.1';
+export const libraryVersion='1.0.2';
 export const ErrorCode=Object.freeze(Object.fromEntries(['EXTENSION_UNAVAILABLE','NATIVE_UNAVAILABLE','VERSION_MISMATCH','USER_CANCELLED','USER_TIMEOUT','PIN_TIMEOUT','CARD_NOT_FOUND','READER_NOT_FOUND','PKCS11_UNAVAILABLE','SITE_DENIED','POLICY_INVALID','CONTEXT_INSECURE','ACTION_PENDING','INVALID_REQUEST','WRONG_KEY','UNKNOWN_ERROR'].map(k=>['ERR_EIDPD_'+k,'ERR_EIDPD_'+k])));
 const failure=(code,message)=>Object.assign(new Error(message),{code});
 let busy=false;
@@ -26,7 +26,14 @@ export async function status(){
 async function action(name,payload={},options={}){
  if(busy)throw failure(ErrorCode.ERR_EIDPD_ACTION_PENDING,'Kaarditoiming on juba pooleli');
  busy=true;
- try {await status();return await request(name,{...payload,options},Math.max(1000,Math.min(options.timeout||options.userInteractionTimeout||120000,180000)));}
+ try {
+  const s=await status();
+  if(['GET_DECRYPT_CERTIFICATE','UNWRAP_TRANSPORT_KEY'].includes(name)&&options.mode==='nfc'){
+   if(!s.nfcCryptoBridge||!s.nfcCryptoSupported)throw failure(ErrorCode.ERR_EIDPD_VERSION_MISMATCH,'Uuenda EID-PD laiendus ja tööjaamakomponent NFC krüptograafia toega versioonile');
+   if(typeof options.can!=='string'||!/^\d{6}$/.test(options.can))throw failure(ErrorCode.ERR_EIDPD_INVALID_REQUEST,'CAN peab sisaldama kuut numbrit');
+  }
+  return await request(name,{...payload,options},Math.max(1000,Math.min(options.timeout||options.userInteractionTimeout||120000,180000)));
+ }
  finally{busy=false;}
 }
 export const readPersonalData=(options={})=>action('READ_PERSONAL_DATA',{},options);
@@ -41,13 +48,18 @@ export async function unwrapTransportKey(certificate,challenge,options={}){
  const r=await action('UNWRAP_TRANSPORT_KEY',{certificate,challenge:{...challenge,displayContext}},options);
  return {contentEncryptionKey:r.data.contentEncryptionKey||r.data.contentEncryptionKeyBase64};
 }
-export function describeStatus(s,capability='personalData'){
+export function describeStatus(s,capability='personalData',mode='contact'){
  if(s.access?.[capability]==='deny')return 'See veebileht on keskse seadistusega keelatud.';
  const d=s.diagnostics;
  if(!d?.pcscAvailable)return 'Kiipkaardi teenus pole kättesaadav. Kontrolli ID-tarkvara paigaldust.';
  if(!d.readerCount)return 'Ühtegi kaardilugejat ei leitud.';
- if(capability==='decrypt'&&d.pkcs11State!=='ready')return d.pkcs11State==='wrong_architecture'?'PKCS#11 teegi arhitektuur ei sobi. Vajalik on 64-bitine teek.':'Dekrüpteerimise PKCS#11 teek puudub või ei laadu.';
+ if(capability==='decrypt'&&mode==='nfc'&&d.nfcReaderCount===0)return 'NFC-kaardilugejat ei leitud.';
+ if(capability==='decrypt'&&mode==='contact'&&d.contactReaderCount===0)return 'Kontaktlugejat ei leitud. NFC jaoks vali kontaktivaba lugemisviis.';
+ if(capability==='decrypt'&&mode==='nfc'&&(!s.nfcCryptoBridge||!s.nfcCryptoSupported))return 'Uuenda EID-PD laiendus ja tööjaamakomponent NFC krüptograafia toega versioonile.';
+ if(capability==='decrypt'&&mode!=='nfc'&&d.pkcs11State!=='ready')return d.pkcs11State==='wrong_architecture'?'PKCS#11 teegi arhitektuur ei sobi. Vajalik on 64-bitine teek.':'Dekrüpteerimise PKCS#11 teek puudub või ei laadu.';
  if(!d.cardPresent)return 'Kaardilugeja on valmis. Sisesta ID-kaart.';
+ if(capability==='decrypt'&&mode==='nfc'&&d.nfcCardPresent===false)return 'Aseta ID-kaart NFC-lugejale.';
+ if(capability==='decrypt'&&mode==='contact'&&d.contactCardPresent===false)return 'Sisesta ID-kaart kontaktlugejasse. NFC jaoks vali kontaktivaba lugemisviis.';
  return s.access?.[capability]==='ask'?'Ühendus on valmis. Kaarditoimingul küsitakse veebilehe luba.':'Ühendus on valmis.';
 }
 export function installationHelp(userAgent=globalThis.navigator?.userAgent||'',distribution={}){
