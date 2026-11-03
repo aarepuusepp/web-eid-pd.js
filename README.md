@@ -48,6 +48,18 @@ SDK history was extracted with `git subtree split --prefix=web-eid-pd` from
 `eid-pd-extension` at `0b78d8b9711304fbb01f0303ff43da871b4aed51`.
 The split retains the original SDK authors, timestamps and messages; Git commit
 IDs change because unrelated extension files are excluded.
+
+## Source layout and generated files
+
+Maintain the SDK in root `index.js` and `index.d.ts`, and the compatibility adapter
+in `packages/web-eid-decrypt`. There is no separate sibling `web-eid-decrypt.js`
+checkout or directory link. The extension and applications install released
+packages; their old `web-eid-pd`/`vendor/web-eid-pd` copies have been removed.
+
+`node_modules/`, `packages/web-eid-decrypt/dist/` and `artifacts/*.tgz` are ignored,
+reproducible dependencies/build outputs. Recreate them with `npm ci` and
+`npm run validate`. Keep migration backups outside this source tree; the temporary
+`artifacts/legacy-decrypt-before-migration` backup is no longer needed.
 See [installer documentation](https://github.com/aarepuusepp/eid-pd-installer)
 for workstation installation and administrator policy.
 
