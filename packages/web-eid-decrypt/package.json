@@ -1,0 +1,19 @@
+{
+  "name": "web-eid-decrypt.js",
+  "version": "1.1.1",
+  "description": "Compatibility API for EID-PD certificate lookup and transport-key unwrapping",
+  "type": "module",
+  "main": "./dist/umd/web-eid-decrypt.cjs",
+  "module": "./dist/es/web-eid-decrypt.js",
+  "types": "./dist/es/web-eid-decrypt.d.ts",
+  "exports": {
+    ".": {
+      "import": { "types": "./dist/es/web-eid-decrypt.d.ts", "default": "./dist/es/web-eid-decrypt.js" },
+      "require": { "types": "./dist/umd/web-eid-decrypt.d.cts", "default": "./dist/umd/web-eid-decrypt.cjs" }
+    }
+  },
+  "files": ["dist"],
+  "scripts": { "build": "node scripts/build.mjs", "test": "node --test test/*.test.mjs", "prepack": "npm run build" },
+  "repository": { "type": "git", "url": "https://github.com/aarepuusepp/web-eid-pd.js.git", "directory": "packages/web-eid-decrypt" },
+  "license": "MIT"
+}

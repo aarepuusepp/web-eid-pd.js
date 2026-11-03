@@ -1,6 +1,8 @@
 {
   "name": "web-eid-pd.js",
-  "version": "1.0.2",
+  "version": "1.0.3",
+  "description": "Browser SDK for the EID-PD extension and workstation component",
+  "repository": { "type": "git", "url": "https://github.com/aarepuusepp/web-eid-pd.js.git" },
   "type": "module",
   "main": "./index.js",
   "types": "./index.d.ts",
@@ -15,7 +17,12 @@
     "index.d.ts"
   ],
   "scripts": {
-    "test": "node --test test/*.test.mjs"
+    "test": "node --test test/*.test.mjs",
+    "build": "node packages/web-eid-decrypt/scripts/build.mjs",
+    "test:compat": "node --test packages/web-eid-decrypt/test/*.test.mjs",
+    "test:packages": "node scripts/test-packages.mjs",
+    "validate": "npm test && npm run build && npm run test:compat && npm run test:packages"
   },
+  "devDependencies": { "esbuild": "0.28.2" },
   "license": "MIT"
 }

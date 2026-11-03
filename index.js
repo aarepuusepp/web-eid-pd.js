@@ -1,4 +1,4 @@
-export const libraryVersion='1.0.2';
+export const libraryVersion='1.0.3';
 export const ErrorCode=Object.freeze(Object.fromEntries(['EXTENSION_UNAVAILABLE','NATIVE_UNAVAILABLE','VERSION_MISMATCH','USER_CANCELLED','USER_TIMEOUT','PIN_TIMEOUT','CARD_NOT_FOUND','READER_NOT_FOUND','PKCS11_UNAVAILABLE','SITE_DENIED','POLICY_INVALID','CONTEXT_INSECURE','ACTION_PENDING','INVALID_REQUEST','WRONG_KEY','UNKNOWN_ERROR'].map(k=>['ERR_EIDPD_'+k,'ERR_EIDPD_'+k])));
 const failure=(code,message)=>Object.assign(new Error(message),{code});
 let busy=false;
@@ -66,7 +66,7 @@ export function installationHelp(userAgent=globalThis.navigator?.userAgent||'',d
  const browser=/Firefox\//.test(userAgent)?'Firefox':/Edg\//.test(userAgent)?'Edge':'Chrome';
  const https=value=>{try {const u=new URL(value);return u.protocol==='https:'&&!u.username&&!u.password?u.href:undefined;}catch{return undefined;}};
  return {browser,installerUrl:https(distribution.installerUrl),extensionUrl:https(distribution[browser.toLowerCase()+'Url']),instructions:'Paigalda EID-PD tööjaamapakett ja lisa '+browser+'i EID-PD laiendus. Seejärel laadi leht uuesti.',
- documentation:'https://github.com/aarepuusepp/web-eid-pd',idSoftware:'https://www.id.ee/paigalda/'};
+ documentation:'https://github.com/aarepuusepp/web-eid-pd.js',idSoftware:'https://www.id.ee/paigalda/'};
 }
 
 

@@ -1,4 +1,4 @@
-# web-eid-pd.js 1.0.2
+# web-eid-pd.js 1.0.3
 
 Shared browser SDK for Visitor and digisign-encrypt. Bundle this npm package with
 the web application; users install the EID-PD native package and browser extension.
@@ -14,8 +14,40 @@ API: status, readPersonalData, readAllReaders, getDecryptCertificate,
 unwrapTransportKey. Type declarations accompany the package. Errors expose a
 stable ERR_EIDPD_* code. PIN and PKCS#11 settings belong to the workstation.
 
-Run `npm test`. Use `npm pack` to create a distributable tarball for your registry;
-workspace applications currently use file dependencies. The eid-pd-installer repository documents installation and administrator policy.
+## Install and develop
+
+This repository is the canonical SDK source. Applications and extension tests use
+a versioned Git dependency; do not maintain copies in `vendor` folders:
+
+```sh
+npm install --save-exact git+https://github.com/aarepuusepp/web-eid-pd.js.git#v1.0.3
+```
+
+Commit the application's lockfile, which records the exact Git commit. The root
+package is `web-eid-pd.js`; `packages/web-eid-decrypt` contains the legacy
+`web-eid-decrypt.js` compatibility package (1.1.1). Its ESM, CommonJS/UMD and IIFE
+bundles are generated from the same SDK source and have no runtime dependencies.
+For new integrations use the root SDK. Do not load both independently bundled
+SDKs into one page; they have separate in-memory request locks.
+
+```sh
+npm ci
+npm run validate
+```
+
+Validation runs SDK tests, builds compatibility formats, tests them, and installs
+both tarballs in an independent consumer. Tarballs are written to `artifacts/`.
+GitHub CI repeats validation on Linux and Windows. Pushing a `v*` tag publishes
+both tarballs to a GitHub Release after all checks pass; npm registry publishing
+is not configured. An offline application build can install a downloaded tarball
+with `npm install ./web-eid-pd.js-1.0.3.tgz` (its other dependencies must also be cached).
+
+SDK history was extracted with `git subtree split --prefix=web-eid-pd` from
+`eid-pd-extension` at `0b78d8b9711304fbb01f0303ff43da871b4aed51`.
+The split retains the original SDK authors, timestamps and messages; Git commit
+IDs change because unrelated extension files are excluded.
+See [installer documentation](https://github.com/aarepuusepp/eid-pd-installer)
+for workstation installation and administrator policy.
 
 Automatic presence indicator:
 
@@ -38,7 +70,7 @@ certificate validity or PIN. No cardholder information is read by this watcher.
 getDecryptCertificate({mode: 'nfc', can, lang}) reads the public encryption
 recipient certificate without PIN. unwrapTransportKey(certificate, challenge,
 {mode: 'nfc', can, lang, fileName}) invokes the native PIN dialog and key operation.
-Current tested release uses reader/package 2.1.10 and extension 2.1.6. Both nfcCryptoSupported and nfcCryptoBridge must
+Use reader and extension 2.1.5. Both nfcCryptoSupported and nfcCryptoBridge must
 be present; an old component yields ERR_EIDPD_VERSION_MISMATCH.
 
 Keep CAN only for the current operation, clear the field afterwards, and never
