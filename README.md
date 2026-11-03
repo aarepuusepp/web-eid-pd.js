@@ -17,13 +17,15 @@ stable ERR_EIDPD_* code. PIN and PKCS#11 settings belong to the workstation.
 ## Install and develop
 
 This repository is the canonical SDK source. Applications and extension tests use
-a versioned Git dependency; do not maintain copies in `vendor` folders:
+a versioned release package; do not maintain copies in `vendor` folders:
 
 ```sh
-npm install --save-exact git+https://github.com/aarepuusepp/web-eid-pd.js.git#v1.0.3
+npm install --save-exact --allow-remote=root https://github.com/aarepuusepp/web-eid-pd.js/releases/download/v1.0.3/web-eid-pd.js-1.0.3.tgz
 ```
 
-Commit the application's lockfile, which records the exact Git commit. The root
+With npm 12, set `allow-remote=root` in the application's `.npmrc` for subsequent
+`npm ci` runs. This permits only URL dependencies declared directly by the project.
+Commit the application's lockfile, which records the package URL and integrity hash. The root
 package is `web-eid-pd.js`; `packages/web-eid-decrypt` contains the legacy
 `web-eid-decrypt.js` compatibility package (1.1.1). Its ESM, CommonJS/UMD and IIFE
 bundles are generated from the same SDK source and have no runtime dependencies.
